@@ -5,11 +5,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>ChatC5</title>
 
-  <!-- Fonts & Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet"/>
 
-  <!-- Highlight.js (ChatGPT-like coloring) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"/>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
@@ -19,7 +17,6 @@
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/yaml.min.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/dockerfile.min.js"></script>
 
-  <!-- Markdown renderer + sanitizer -->
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
 
@@ -50,8 +47,11 @@
     }
 
     /* Sidebar */
-    .sidebar{width:var(--sidebar-w); background:var(--sidebar-bg); border-right:1px solid var(--border);
-      height:100vh; display:flex; flex-direction:column; z-index:5; transition:transform var(--trans);}    
+    .sidebar{
+      width:var(--sidebar-w); background:var(--sidebar-bg); border-right:1px solid var(--border);
+      height:100vh; display:flex; flex-direction:column; z-index:5; transition:transform var(--trans);
+      overflow:auto; /* allow scrolling entire panel on small screens */
+    }
     .logo-row{display:flex; align-items:center; gap:10px; padding:16px; border-bottom:1px solid var(--border)}
     .logo{width:36px;height:36px;border-radius:8px;background:var(--primary);display:grid;place-items:center;font-weight:800}
     .logo-text{font-weight:700}
@@ -64,7 +64,11 @@
     .chat-item:hover{background:rgba(255,255,255,.06)}
     .chat-item .trash{position:absolute; right:8px; opacity:0; background:transparent; border:0; color:var(--muted); cursor:pointer}
     .chat-item:hover .trash{opacity:1}
-    .profile{border-top:1px solid var(--border); padding:10px 12px; position:relative}
+    .profile{
+      border-top:1px solid var(--border); padding:10px 12px;
+      position:sticky; bottom:0; background:var(--sidebar-bg); /* keep visible on mobile */
+      padding-bottom: max(10px, env(safe-area-inset-bottom));
+    }
     .profile-btn{display:flex; gap:10px; align-items:center; padding:8px; border-radius:10px; cursor:pointer;}
     .profile-btn:hover{background:rgba(255,255,255,.06)}
     .avatar{width:32px;height:32px;border-radius:8px;background:var(--primary);display:grid;place-items:center}
@@ -75,7 +79,6 @@
     .drop-item:hover{background:rgba(255,255,255,.06)}
     .divider{height:1px;background:var(--border)}
 
-    /* Mobile overlay to close sidebar on click */
     .overlay{position:fixed; inset:0; background:rgba(0,0,0,.35); display:none; z-index:4}
     .overlay.show{display:block}
     @media (max-width: 920px){
@@ -83,7 +86,7 @@
       .sidebar.active{transform:translateX(0)}
     }
 
-    /* Main Layout */
+    /* Main */
     .main{flex:1; display:flex; flex-direction:column; height:100vh}
     .topbar{height:60px; display:flex; align-items:center; justify-content:center; border-bottom:1px solid var(--border); position:relative}
     .toggle{position:absolute; left:12px; background:transparent; border:0; color:var(--text); font-size:20px; display:none}
@@ -92,7 +95,6 @@
 
     .chat{flex:1; overflow:auto; padding:22px; display:flex; flex-direction:column; position:relative}
 
-    /* Welcome (organized) */
     .welcome{max-width:900px; margin:36px auto; background:rgba(255,255,255,.04); border:1px solid var(--border);
       border-radius:16px; box-shadow:var(--shadow); padding:26px}
     .hero{display:grid; grid-template-columns:1.2fr .8fr; gap:18px; align-items:center}
@@ -107,17 +109,28 @@
       .welcome{margin:16px}
     }
 
-    /* Messages */
-    .messages{max-width:900px; width:100%; margin:0 auto; display:none; flex-direction:column; gap:18px; padding-bottom:24px}
-    .row{display:flex; gap:12px; align-items:flex-start}
+    /* Chat area */
+    .messages{max-width:900px; width:100%; margin:0 auto; display:flex; flex-direction:column; gap:18px; padding-bottom:24px}
+    .row{display:flex; gap:12px; align-items:flex-start; min-width:0;} /* prevent horizontal overflow */
     .who{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;flex-shrink:0}
     .who.user{background:var(--primary)}
     .who.bot{background:#5436da}
-    .bubble{max-width:100%; background:var(--card); border:1px solid var(--border); border-radius:16px; padding:14px 16px;
-      box-shadow:var(--shadow); flex:1; overflow:hidden; word-wrap: break-word;}
 
-    /* Readability & Wrapping */
-    .markdown{line-height:1.7; font-size:16px; word-wrap:break-word; overflow-wrap:anywhere}
+    .bubble{
+      max-width:100%;
+      width:100%;
+      min-width:0;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:14px 16px;
+      box-shadow:var(--shadow);
+      flex:1;
+      overflow:hidden;
+      word-wrap: break-word;
+    }
+
+    .markdown{line-height:1.7; font-size:16px; word-wrap:break-word; overflow-wrap:anywhere; max-width:100%}
     .markdown p{margin:0 0 12px}
     .markdown p:last-child{margin:0}
     .markdown ul, .markdown ol{margin:0 0 12px 20px}
@@ -127,30 +140,37 @@
     .markdown th,.markdown td{border:1px solid #2a2a2a; padding:8px 10px; text-align:left}
     .markdown th{background:#2a2a2a}
 
-    /* Code */
     .markdown code{font-family:"Fira Code",monospace; background:#1e1e1e; padding:2px 6px; border-radius:6px; white-space:pre-wrap}
-    .markdown pre{background:#1e1e1e; border-radius:12px; border:1px solid #2a2a2a; overflow:auto; padding:12px; margin:12px 0; max-height:60vh}
-    .markdown pre code{font-size:14px; line-height:1.5; white-space:pre; display:block; overflow-x: auto;}
+    .markdown pre{
+      background:#1e1e1e;
+      border-radius:12px;
+      border:1px solid #2a2a2a;
+      padding:12px;
+      margin:12px 0;
+      max-height:60vh;
+      max-width:100%;
+      overflow:auto;          /* scroll inside code block only */
+    }
+    .markdown pre code{
+      font-size:14px; line-height:1.5;
+      white-space:pre; display:block; overflow-x:auto; overflow-y:hidden;
+    }
 
-    /* Inline toolbar above blocks */
     .toolbar{display:flex; justify-content:space-between; align-items:center; color:var(--muted); font-size:12px; margin:4px 0 8px}
     .copy{background:transparent; border:0; color:var(--muted); cursor:pointer}
     .copy:hover{color:var(--text)}
     .stop{background: transparent; border: 1px solid var(--error); color: var(--error); border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 12px;}
     .stop:hover{background: rgba(244, 67, 54, 0.1);}
 
-    /* Streaming (plain, wrapped) */
     .streaming-wrap{display:flex; flex-direction:column; gap:8px}
     .streaming-plain{font-family:"Fira Code",monospace; background:#1e1e1e; border:1px solid #2a2a2a; border-radius:12px; padding:12px;
       white-space:pre-wrap; word-break:break-word; max-height:60vh; overflow:auto}
 
-    /* Processing bar */
     .progress{height:3px; background:#2a2a2a; overflow:hidden; border-radius:6px}
     .indet{position:relative; height:100%; width:40%; left:-40%; background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);
       animation:slide 1.3s infinite}
     @keyframes slide{0%{left:-40%}100%{left:100%}}
 
-    /* Input */
     .input{padding:16px 22px}
     .ibox{display:flex; align-items:center; border:1px solid var(--input-b); background:var(--input); border-radius:14px;
       transition:border var(--trans), box-shadow var(--trans)}
@@ -161,15 +181,12 @@
     .send:disabled{opacity:.5; cursor:not-allowed}
     .hint{color:var(--muted); font-size:12px; text-align:center; margin-top:8px}
 
-    /* Scroll-to-bottom button */
     .toBottom{position:sticky; bottom:16px; align-self:flex-end; margin-top:-36px; margin-right:8px; z-index:2;
       background:var(--card); border:1px solid var(--border); color:var(--text); border-radius:20px; padding:6px 10px; display:none; gap:6px; align-items:center; box-shadow:var(--shadow); cursor:pointer}
     .toBottom.show{display:inline-flex}
 
-    /* Utility hide on desktop overlay */
     @media (min-width: 921px){ .overlay{display:none!important} }
 
-    /* Mobile optimizations */
     @media (max-width: 768px) {
       .row { flex-direction: column; align-items: flex-start; }
       .who { margin-bottom: 8px; }
@@ -179,7 +196,6 @@
   </style>
 </head>
 <body>
-  <!-- Sidebar + overlay -->
   <aside class="sidebar" id="sidebar">
     <div class="logo-row">
       <div class="logo">C5</div><div class="logo-text">ChatC5</div>
@@ -187,7 +203,6 @@
     <button class="new-chat" id="newChat"><i class="fa-solid fa-plus"></i> New chat</button>
     <div class="chats" id="chats">
       <div class="chats-title">Recent chats</div>
-      <!-- chat items injected -->
     </div>
     <div class="profile">
       <div class="profile-btn" id="profileBtn" aria-haspopup="true" aria-expanded="false">
@@ -208,7 +223,6 @@
   </aside>
   <div class="overlay" id="overlay"></div>
 
-  <!-- Main -->
   <main class="main">
     <div class="topbar">
       <button class="toggle" id="toggle" aria-label="Open menu"><i class="fa-solid fa-bars"></i></button>
@@ -216,7 +230,6 @@
     </div>
 
     <div class="chat" id="chat">
-      <!-- Organized welcome -->
       <section class="welcome" id="welcome">
         <div class="hero">
           <div>
@@ -232,14 +245,11 @@
         </div>
       </section>
 
-      <!-- Messages -->
       <section class="messages" id="messages"></section>
 
-      <!-- Scroll to bottom button within chat area -->
       <button class="toBottom" id="toBottom" title="Jump to latest"><i class="fa-solid fa-arrow-down"></i><span>Latest</span></button>
     </div>
 
-    <!-- Input -->
     <div class="input">
       <div class="ibox">
         <textarea id="input" placeholder="Message ChatC5…" rows="1"></textarea>
@@ -251,7 +261,6 @@
 
 <script>
 (() => {
-  // ===== Elements =====
   const sidebar   = document.getElementById('sidebar');
   const overlay   = document.getElementById('overlay');
   const toggleBtn = document.getElementById('toggle');
@@ -268,14 +277,12 @@
   const input     = document.getElementById('input');
   const sendBtn   = document.getElementById('send');
 
-  // ===== State =====
   let sessionId = localStorage.getItem('chatc5_session_id');
   if (!sessionId){ sessionId = (crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()); localStorage.setItem('chatc5_session_id', sessionId); }
   let chats = JSON.parse(localStorage.getItem('chatc5_chats') || '[]');
   let currentId = null;
   let abortController = null;
 
-  // Auto-scroll control
   let autoScroll = true;
   const isNearBottom = () => (chatWrap.scrollHeight - chatWrap.scrollTop - chatWrap.clientHeight) < 120;
 
@@ -287,7 +294,6 @@
     chatWrap.scrollTo({ top: chatWrap.scrollHeight, behavior: 'smooth' });
   });
 
-  // ===== Markdown config (tables + highlight) =====
   document.addEventListener('DOMContentLoaded', () => {
     if (window.marked) {
       marked.setOptions({
@@ -310,7 +316,6 @@
     }
   });
 
-  // ===== Utilities =====
   const save = () => localStorage.setItem('chatc5_chats', JSON.stringify(chats));
   const now  = () => new Date().toISOString();
 
@@ -327,7 +332,6 @@
     }
   });
 
-  // Profile menu
   profileBtn.addEventListener('click', (e)=>{
     e.stopPropagation();
     profileMenu.classList.toggle('show');
@@ -340,19 +344,16 @@
     }
   });
 
-  // Auto-resize textarea
   input.addEventListener('input', ()=>{
     input.style.height = 'auto';
     input.style.height = Math.min(input.scrollHeight, 220) + 'px';
   });
 
-  // Keyboard submit
   input.addEventListener('keydown', (e)=>{
     if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); submit(); }
   });
   sendBtn.addEventListener('click', submit);
 
-  // ===== Chat list =====
   function renderChats(){
     const header = chatsBox.querySelector('.chats-title');
     chatsBox.innerHTML = '';
@@ -379,7 +380,7 @@
     currentId = id;
     messages.innerHTML = '';
     welcome.style.display = 'block';
-    messages.style.display = 'none';
+    messages.style.display = 'flex';
     save(); renderChats(); input.focus();
   }
 
@@ -390,7 +391,7 @@
     messages.innerHTML = '';
     c.messages.forEach(m => appendMessage(m.role, m.text, false));
     if (c.messages.length){ welcome.style.display='none'; messages.style.display='flex'; }
-    else{ welcome.style.display='block'; messages.style.display='none'; }
+    else{ welcome.style.display='block'; messages.style.display='flex'; }
     setTimeout(()=> chatWrap.scrollTop = chatWrap.scrollHeight, 0);
   }
 
@@ -402,16 +403,24 @@
 
   newChat.addEventListener('click', startChat);
 
-  // ===== Message rendering =====
+  /* --- Code/command detection + fencing --- */
   function detectCommand(text){
     const oneLine = text.trim().split('\n').length === 1;
     const cliRx = /(^|\n)\s*(sudo|apt|apt-get|yum|dnf|brew|pip3?|python3?|node|npm|npx|pnpm|git|ls|cd|cp|mv|rm|cat|echo|grep|awk|sed|chmod|chown|systemctl|service|kubectl|docker)\b/;
     return oneLine && cliRx.test(text);
   }
-
+  function isLikelyHTML(t){
+    return /<!DOCTYPE|<html[\s>]|<head[\s>]|<body[\s>]|<style[\s>]|<script[\s>]/i.test(t);
+  }
   function fenceIfCommand(text){
     if (!/```/.test(text) && detectCommand(text)){
       return '```bash\n' + text.trim() + '\n```';
+    }
+    return text;
+  }
+  function fenceIfHTML(text){
+    if (isLikelyHTML(text) && !/```/.test(text)){
+      return '```html\n' + text.trim() + '\n```';
     }
     return text;
   }
@@ -432,14 +441,13 @@
   }
 
   function renderMarkdown(text){
-    const md = fenceIfCommand(text);
+    const md = fenceIfCommand(fenceIfHTML(text));
     const rawHtml = (window.marked ? marked.parse(md) : `<pre><code>${escapeHtml(md)}</code></pre>`);
     const safeHtml = (window.DOMPurify ? DOMPurify.sanitize(rawHtml, {USE_PROFILES:{html:true}}) : rawHtml);
     const container = document.createElement('div');
     container.className = 'markdown';
     container.innerHTML = safeHtml;
     if (window.hljs){ container.querySelectorAll('pre code').forEach(el=>hljs.highlightElement(el)); }
-    // Add toolbars for each pre but DO NOT wrap in extra bubbles
     container.querySelectorAll('pre').forEach(pre => addToolbarBefore(pre));
     return container;
   }
@@ -477,7 +485,6 @@
     if (autoScroll) chatWrap.scrollTop = chatWrap.scrollHeight;
   }
 
-  // ===== Streaming bot message with progress bar =====
   function startStreamingBubble(){
     const row = document.createElement('div'); row.className = 'row';
     const who = document.createElement('div'); who.className = 'who bot'; who.innerHTML = '<i class="fa-solid fa-robot"></i>';
@@ -518,19 +525,20 @@
     };
   }
 
-  // ===== Submit / Backend =====
+  /* Use Flask endpoints and parse NDJSON stream */
   async function submit(){
     const text = input.value.trim(); 
     if (!text) return;
-    
-    // Reset UI
     input.value=''; 
     input.style.height='56px'; 
     sendBtn.disabled = true;
 
-    // Create new abort controller
+    /* Bias toward code/commands formatting only (no safety changes) */
+    const wantsCode = /^(build|write|create|generate|make|show)\b/i.test(text)
+      || /```|<!DOCTYPE|<html|<body|<style|<script|\b(def |class |function |SELECT |INSERT |sudo |apt|yum|dnf|brew|pip|npm|npx|pnpm|git )/i.test(text);
+    const prefix = wantsCode ? "Return only code or commands. No explanations.\n\n" : "";
+
     abortController = new AbortController();
-    
     appendMessage('user', text, true);
 
     const streamer = startStreamingBubble();
@@ -547,17 +555,16 @@
 
     let usedStream = false;
     try{
-      const r = await fetch('/api/chat/stream', {
+      const r = await fetch('/chat/stream', {
         method:'POST',
-        headers:{'Content-Type':'application/json','Accept':'text/event-stream, */*'},
-        body: JSON.stringify({ message:text, session_id: sessionId }),
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ message: prefix + text, session_id: sessionId }),
         signal: abortController.signal
       });
-      
       if (!r.ok || !r.body) throw new Error(String(r.status));
       usedStream = true;
 
-      await readStream(r.body, (delta)=> streamer.push(delta));
+      await readNdjsonStream(r.body, (delta)=> streamer.push(delta));
       const full = streamer.finalize();
 
       const idx = chats.findIndex(c => c.id === currentId);
@@ -568,7 +575,6 @@
       }
 
     } catch(err) {
-      // Handle abort specifically
       if (err.name === 'AbortError') {
         const partial = streamer.finalize();
         const idx = chats.findIndex(c => c.id === currentId);
@@ -579,12 +585,11 @@
         }
         return;
       }
-      
       if (!usedStream){
         try{
-          const r = await fetch('/api/chat/', {
+          const r = await fetch('/chat', {
             method:'POST', headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({ message:text, session_id: sessionId })
+            body: JSON.stringify({ message: prefix + text, session_id: sessionId })
           });
           if (!r.ok) throw new Error(String(r.status));
           const data = await r.json();
@@ -610,52 +615,48 @@
     }
   }
 
-  // Robust stream reader: supports SSE (data: ...) and raw chunked text
-  async function readStream(stream, onChunk){
+  /* Parse application/x-ndjson lines: {"response":"...","done":false}\n ... */
+  async function readNdjsonStream(stream, onChunk){
     const reader = stream.getReader();
     const decoder = new TextDecoder('utf-8');
     let buffer = '';
-    let mode = null; // 'sse' | 'raw'
-
     for(;;){
       const { value, done } = await reader.read();
       if (done) break;
-      const chunk = decoder.decode(value, { stream:true });
-      if (!mode){
-        if (/\bdata:\s/.test(chunk)) mode = 'sse'; else mode = 'raw';
-      }
-
-      if (mode === 'raw'){
-        onChunk(chunk);
-        continue;
-      }
-
-      // SSE mode
-      buffer += chunk;
-      const lines = buffer.split(/\r?\n/);
-      buffer = lines.pop() || '';
-      for (const line of lines){
+      buffer += decoder.decode(value, { stream:true });
+      let idx;
+      while ((idx = buffer.indexOf('\n')) >= 0){
+        const line = buffer.slice(0, idx).trim();
+        buffer = buffer.slice(idx+1);
         if (!line) continue;
-        if (line.startsWith('data: ')){
-          const payload = line.slice(6);
-          if (payload === '[DONE]') return;
-          onChunk(payload);
+        try{
+          const obj = JSON.parse(line);
+          if (obj && typeof obj.response === 'string') onChunk(obj.response);
+          if (obj && obj.done) return;
+        }catch(_){
+          onChunk(line);
         }
       }
     }
-
-    if (mode === 'sse' && buffer.trim()){
-      const m = buffer.match(/data:\s*(.*)/);
-      if (m && m[1]) onChunk(m[1]);
+    if (buffer.trim()){
+      try{
+        const obj = JSON.parse(buffer.trim());
+        if (obj && typeof obj.response === 'string') onChunk(obj.response);
+      }catch(_){
+        onChunk(buffer);
+      }
     }
   }
 
-  // ===== Boot =====
-  function boot(){
+  function renderChatsOnBoot(){
     renderChats();
     if (chats.length === 0) startChat(); else loadChat(chats[0].id);
   }
-  boot();
+
+  function escapeHtml(s){ const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+  function escapeHtmlInline(s){ return String(s).replace(/[&<>\"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c])); }
+
+  renderChatsOnBoot();
 })();
 </script>
 </body>
