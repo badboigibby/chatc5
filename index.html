@@ -2,15 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <!-- NOTE: viewport-fit=cover helps on iOS to respect the safe area (Dynamic Island / home bar) -->
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
   <title>ChatC5</title>
 
-  <!-- Fonts & Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet"/>
 
-  <!-- Highlight.js (ChatGPT-like coloring) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"/>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
@@ -20,7 +17,6 @@
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/yaml.min.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/dockerfile.min.js"></script>
 
-  <!-- Markdown renderer + sanitizer -->
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
 
@@ -42,11 +38,6 @@
       --trans:.2s ease;
       --error:#f44336;
 
-      /* ===== Mobile keyboard & input sizing helpers =====
-         You can tweak these if the chat box hides under the keyboard.
-         - Increase --input-bump to push content above the input more on mobile.
-         - --input-h and --kb-offset are set dynamically via JS.
-      */
       --input-h: 88px;    /* measured at runtime */
       --kb-offset: 0px;   /* keyboard overlap (visualViewport) */
       --input-bump: 12px; /* <— increase to push messages up a bit more */
@@ -108,7 +99,7 @@
       padding-bottom: calc(var(--input-h) + env(safe-area-inset-bottom) + var(--input-bump));
     }
 
-    /* Welcome (organized) */
+    /* Welcome */
     .welcome{max-width:900px; margin:36px auto; background:rgba(255,255,255,.04); border:1px solid var(--border);
       border-radius:16px; box-shadow:var(--shadow); padding:26px}
     .hero{display:grid; grid-template-columns:1.2fr .8fr; gap:18px; align-items:center}
@@ -199,7 +190,6 @@
   </style>
 </head>
 <body>
-  <!-- Sidebar + overlay -->
   <aside class="sidebar" id="sidebar">
     <div class="logo-row">
       <div class="logo">C5</div><div class="logo-text">ChatC5</div>
@@ -228,7 +218,6 @@
   </aside>
   <div class="overlay" id="overlay"></div>
 
-  <!-- Main -->
   <main class="main">
     <div class="topbar">
       <button class="toggle" id="toggle" aria-label="Open menu"><i class="fa-solid fa-bars"></i></button>
@@ -236,7 +225,6 @@
     </div>
 
     <div class="chat" id="chat">
-      <!-- Organized welcome -->
       <section class="welcome" id="welcome">
         <div class="hero">
           <div>
@@ -252,14 +240,11 @@
         </div>
       </section>
 
-      <!-- Messages -->
       <section class="messages" id="messages"></section>
 
-      <!-- Scroll to bottom button within chat area -->
       <button class="toBottom" id="toBottom" title="Jump to latest"><i class="fa-solid fa-arrow-down"></i><span>Latest</span></button>
     </div>
 
-    <!-- Input -->
     <div class="input">
       <div class="ibox">
         <textarea id="input" placeholder="Message ChatC5…" rows="1"></textarea>
@@ -271,18 +256,12 @@
 
 <script>
 (() => {
-  // ======= CONFIG: Choose backend =======
-  // Set BACKEND_MODE to 'local' or 'hf'
-  // LOCAL_BASE: your local server (FastAPI/Express/etc). Example below uses http://127.0.0.1:8000
-  // HF_SPACE_URL: your Hugging Face Space base (we picked "chatc5-lite" as the Space name).
-  //               When you create the Space, keep your endpoints at:  /chat  and  /chat/stream  (CORS enabled)
   const BACKEND_MODE = 'local'; // 'local' | 'hf'
   const LOCAL_BASE   = 'http://127.0.0.1:8000';
   const HF_SPACE_URL = 'https://chatc5-lite.hf.space';
 
   const BASE_URL = (BACKEND_MODE === 'local') ? LOCAL_BASE : HF_SPACE_URL;
 
-  // ===== Elements =====
   const sidebar   = document.getElementById('sidebar');
   const overlay   = document.getElementById('overlay');
   const toggleBtn = document.getElementById('toggle');
@@ -299,14 +278,12 @@
   const input     = document.getElementById('input');
   const sendBtn   = document.getElementById('send');
 
-  // ===== State =====
   let sessionId = localStorage.getItem('chatc5_session_id');
   if (!sessionId){ sessionId = (crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()); localStorage.setItem('chatc5_session_id', sessionId); }
   let chats = JSON.parse(localStorage.getItem('chatc5_chats') || '[]');
   let currentId = null;
   let abortController = null;
 
-  // Auto-scroll control
   let autoScroll = true;
   const isNearBottom = () => (chatWrap.scrollHeight - chatWrap.scrollTop - chatWrap.clientHeight) < 120;
 
@@ -317,8 +294,7 @@
   toBottom.addEventListener('click', () => {
     chatWrap.scrollTo({ top: chatWrap.scrollHeight, behavior: 'smooth' });
   });
-
-  // ===== Markdown config (tables + highlight) =====
+  
   document.addEventListener('DOMContentLoaded', () => {
     if (window.marked) {
       marked.setOptions({
@@ -341,7 +317,6 @@
     }
   });
 
-  // ===== Utilities =====
   const save = () => localStorage.setItem('chatc5_chats', JSON.stringify(chats));
   const now  = () => new Date().toISOString();
 
@@ -358,7 +333,6 @@
     }
   });
 
-  // Profile menu
   profileBtn.addEventListener('click', (e)=>{
     e.stopPropagation();
     profileMenu.classList.toggle('show');
@@ -371,21 +345,17 @@
     }
   });
 
-  // Auto-resize textarea
   input.addEventListener('input', ()=>{
     input.style.height = 'auto';
     input.style.height = Math.min(input.scrollHeight, 220) + 'px';
-    // Recompute input height variable so chat bottom padding stays correct
     updateHeights();
   });
 
-  // Keyboard submit
   input.addEventListener('keydown', (e)=>{
     if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); submit(); }
   });
   sendBtn.addEventListener('click', submit);
 
-  // ===== Chat list =====
   function renderChats(){
     const header = chatsBox.querySelector('.chats-title');
     chatsBox.innerHTML = '';
@@ -435,7 +405,6 @@
 
   newChat.addEventListener('click', startChat);
 
-  // ===== Message rendering =====
   function detectCommand(text){
     const oneLine = text.trim().split('\n').length === 1;
     const cliRx = /(^|\n)\s*(sudo|apt|apt-get|yum|dnf|brew|pip3?|python3?|node|npm|npx|pnpm|git|ls|cd|cp|mv|rm|cat|echo|grep|awk|sed|chmod|chown|systemctl|service|kubectl|docker)\b/;
@@ -510,7 +479,6 @@
     if (autoScroll) chatWrap.scrollTop = chatWrap.scrollHeight;
   }
 
-  // ===== Streaming bot message with progress bar =====
   function startStreamingBubble(){
     const row = document.createElement('div'); row.className = 'row';
     const who = document.createElement('div'); who.className = 'who bot'; who.innerHTML = '<i class="fa-solid fa-robot"></i>';
@@ -551,17 +519,14 @@
     };
   }
 
-  // ===== Submit / Backend =====
   async function submit(){
     const text = input.value.trim(); 
     if (!text) return;
     
-    // Reset UI
     input.value=''; 
     input.style.height='56px'; 
     sendBtn.disabled = true;
 
-    // Create new abort controller
     abortController = new AbortController();
     
     appendMessage('user', text, true);
@@ -580,13 +545,11 @@
 
     let usedStream = false;
     try{
-      // Try streaming endpoint first
       const r = await fetch(`${BASE_URL}/chat/stream`, {
         method:'POST',
         headers:{'Content-Type':'application/json','Accept':'text/event-stream, */*'},
         body: JSON.stringify({ message:text, session_id: sessionId }),
         signal: abortController.signal,
-        // If fetching cross-origin (e.g., GH Pages -> local/HF), make sure your server enables CORS
         mode: 'cors',
         credentials: 'omit'
       });
@@ -605,7 +568,6 @@
       }
 
     } catch(err) {
-      // Handle abort specifically
       if (err.name === 'AbortError') {
         const partial = streamer.finalize();
         const idx = chats.findIndex(c => c.id === currentId);
@@ -618,8 +580,6 @@
         abortController = null;
         return;
       }
-      
-      // Fallback to non-streaming endpoint
       if (!usedStream){
         try{
           const r = await fetch(`${BASE_URL}/chat`, {
@@ -653,8 +613,6 @@
       setTimeout(()=> input.scrollIntoView({block:'end', behavior:'smooth'}), 50);
     }
   }
-
-  // Robust stream reader: supports SSE (data: ...) and raw chunked text
   async function readStream(stream, onChunk){
     const reader = stream.getReader();
     const decoder = new TextDecoder('utf-8');
@@ -674,7 +632,6 @@
         continue;
       }
 
-      // SSE mode
       buffer += chunk;
       const lines = buffer.split(/\r?\n/);
       buffer = lines.pop() || '';
@@ -694,35 +651,27 @@
     }
   }
 
-  // ===== Mobile keyboard & viewport fixes =====
   function updateHeights(){
-    // Set --vh to the actual innerHeight to avoid 100vh issues on mobile
     const vh = window.innerHeight * 0.01;
     document.documentElement.style.setProperty('--vh', `${vh}px`);
-    // Set --input-h to the measured input block height so .chat bottom padding is accurate
     const inputEl = document.querySelector('.input');
     if (inputEl){
       const h = inputEl.offsetHeight;
       document.documentElement.style.setProperty('--input-h', `${h}px`);
     }
   }
-
-  // Keep input visible when the virtual keyboard opens
   function setupVisualViewport(){
     if (!window.visualViewport) return;
     const vv = window.visualViewport;
     const applyOffset = () => {
-      // keyboard overlap = window.innerHeight - visualViewport.height (approx)
       const offset = Math.max(0, window.innerHeight - vv.height);
       document.documentElement.style.setProperty('--kb-offset', `${offset}px`);
-      // Scroll to bottom so latest message & input are visible
       setTimeout(()=> chatWrap.scrollTo({ top: chatWrap.scrollHeight, behavior: 'smooth' }), 50);
     };
     vv.addEventListener('resize', applyOffset);
     vv.addEventListener('scroll', applyOffset);
   }
 
-  // When focusing the textarea, ensure it scrolls into view above keyboard
   input.addEventListener('focus', ()=>{
     setTimeout(()=>{
       updateHeights();
@@ -731,7 +680,6 @@
     }, 50);
   });
 
-  // ===== Boot =====
   function boot(){
     updateHeights();
     setupVisualViewport();
